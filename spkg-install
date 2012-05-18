@@ -8,8 +8,39 @@ fi
 
 set -e
 
-cmake -DCMAKE_INSTALL_PREFIX="$SPKG_LOCAL" \
-        -DCMAKE_BUILD_TYPE=Release \
-        .
+# detect shared library file suffix extension
+LIB_SUFFIX=so
+PY_LIB_SUFFIX=a
+if [ `uname -s` = Darwin ] ; then
+    LIB_SUFFIX=dylib
+fi
+if [ $UNAME = "CYGWIN" ] ; then
+    LIB_SUFFIX=dll.a
+    PY_LIB_SUFFIX=dll.a
+fi
+
+cmake -DBUILD_SHARED_LIBS:BOOL=ON \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DVTK_WRAP_PYTHON:BOOL=ON \
+    -DPYTHON_EXECUTABLE:FILEPATH=$SPKG_LOCAL/bin/python \
+    -DPYTHON_INCLUDE_PATH:PATH=$SPKG_LOCAL/include/python2.6 \
+    -DPYTHON_LIBRARY:FILEPATH=$SPKG_LOCAL/lib/python2.6/config/libpython2.6.$PY_LIB_SUFFIX \
+    -DVTK_USE_GUISUPPORT:BOOL=ON \
+    -DVTK_USE_DISPLAY:BOOL=ON \
+    -DVTK_USE_GL2PS:BOOL=ON \
+    -DVTK_USE_X:BOOL=ON \
+    -DVTK_USE_TK:BOOL=OFF \
+    -DBUILD_TESTING:BOOL=OFF \
+    -DCMAKE_INSTALL_PREFIX:PATH="$SPKG_LOCAL" \
+    -DCMAKE_USE_RELATIVE_PATHS:BOOL=OFF \
+    -DVTK_OPENGL_HAS_OSMESA=ON \
+    -DVTK_USE_OFFSCREEN=ON \
+    -DOSMESA_INCLUDE_DIR=$SPKG_LOCAL \
+    -DOSMESA_LIBRARY=$SPKG_LOCAL/lib/libOSMesa.$LIB_SUFFIX \
+    -DOPENGL_INCLUDE_DIR=$SPKG_LOCAL/include \
+    -DOPENGL_gl_LIBRARY=$SPKG_LOCAL/lib/libGL.$LIB_SUFFIX \
+    -DOPENGL_glu_LIBRARY=$SPKG_LOCAL/lib/libGLU.$LIB_SUFFIX \
+    .
+
 make
 make install
